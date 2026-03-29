@@ -1,0 +1,1388 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>乳癌風險自我評估系統</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --rose: #e05c7a;
+    --rose-light: #f8d7df;
+    --rose-dark: #b03458;
+    --rose-glow: rgba(224, 92, 122, 0.18);
+    --amber: #f59e42;
+    --amber-light: #fef3e2;
+    --green: #27b082;
+    --green-light: #d4f5eb;
+    --red: #e8374a;
+    --red-light: #fde8ea;
+    --bg: #fdf6f8;
+    --card: #ffffff;
+    --text: #2d1a24;
+    --text-muted: #9c7a88;
+    --border: #f0d8df;
+    --shadow: 0 4px 32px rgba(176,52,88,0.10);
+    --shadow-lg: 0 12px 48px rgba(176,52,88,0.18);
+    --radius: 20px;
+    --radius-sm: 12px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Sans TC', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── Background decoration ── */
+  body::before {
+    content: '';
+    position: fixed;
+    top: -200px; right: -200px;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(224,92,122,0.13) 0%, transparent 70%);
+    pointer-events: none; z-index: 0;
+  }
+  body::after {
+    content: '';
+    position: fixed;
+    bottom: -150px; left: -150px;
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(245,158,66,0.10) 0%, transparent 70%);
+    pointer-events: none; z-index: 0;
+  }
+
+  .app {
+    position: relative; z-index: 1;
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 24px 16px 60px;
+  }
+
+  /* ── Header ── */
+  .header {
+    text-align: center;
+    padding: 40px 24px 32px;
+    background: linear-gradient(135deg, #fff0f4 0%, #fff8ec 100%);
+    border-radius: var(--radius);
+    border: 1.5px solid var(--border);
+    margin-bottom: 28px;
+    box-shadow: var(--shadow);
+    position: relative;
+    overflow: hidden;
+  }
+  .header::before {
+    content: '🎗️';
+    position: absolute;
+    top: -10px; right: 20px;
+    font-size: 80px; opacity: 0.07;
+    transform: rotate(15deg);
+  }
+  .header-badge {
+    display: inline-block;
+    background: var(--rose);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 5px 14px;
+    border-radius: 20px;
+    margin-bottom: 14px;
+  }
+  .header h1 {
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: clamp(22px, 5vw, 34px);
+    font-weight: 900;
+    color: var(--rose-dark);
+    line-height: 1.25;
+    margin-bottom: 10px;
+  }
+  .header p {
+    font-size: clamp(13px, 2.5vw, 15px);
+    color: var(--text-muted);
+    line-height: 1.7;
+    max-width: 520px;
+    margin: 0 auto 16px;
+  }
+  .auc-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #fff;
+    border: 1.5px solid var(--rose-light);
+    border-radius: 30px;
+    padding: 6px 16px;
+    font-size: 13px;
+    color: var(--rose-dark);
+    font-weight: 600;
+  }
+  .auc-badge span { font-size: 18px; font-weight: 900; color: var(--rose); }
+
+  /* ── Progress ── */
+  .progress-wrap {
+    background: var(--card);
+    border-radius: var(--radius);
+    border: 1.5px solid var(--border);
+    padding: 18px 24px;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow);
+  }
+  .progress-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .progress-label { font-size: 13px; font-weight: 600; color: var(--text-muted); }
+  .progress-step { font-size: 13px; font-weight: 700; color: var(--rose); }
+  .progress-bar-bg {
+    height: 8px;
+    background: var(--rose-light);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--rose-dark), var(--rose));
+    border-radius: 10px;
+    transition: width 0.5s cubic-bezier(.4,0,.2,1);
+  }
+
+  /* ── Section ── */
+  .section {
+    background: var(--card);
+    border-radius: var(--radius);
+    border: 1.5px solid var(--border);
+    padding: 28px 24px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow);
+    transition: box-shadow 0.3s;
+    display: none;
+  }
+  .section.active { display: block; animation: fadeSlideIn 0.4s ease; }
+  @keyframes fadeSlideIn {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 22px;
+    padding-bottom: 18px;
+    border-bottom: 1.5px solid var(--border);
+  }
+  .section-icon {
+    width: 48px; height: 48px;
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+  .icon-high { background: linear-gradient(135deg, #fde8ea, #fcc0cb); }
+  .icon-mid  { background: linear-gradient(135deg, #fef3e2, #fdd8a0); }
+  .icon-low  { background: linear-gradient(135deg, #d4f5eb, #a8e8d4); }
+
+  .section-title-wrap h2 {
+    font-size: clamp(16px, 3.5vw, 20px);
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1.3;
+  }
+  .section-title-wrap p {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 3px;
+  }
+  .weight-tag {
+    margin-left: auto;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .weight-high { background: var(--red-light); color: var(--red); }
+  .weight-mid  { background: var(--amber-light); color: #b35f00; }
+  .weight-low  { background: var(--green-light); color: #1a7a5a; }
+
+  /* ── Question ── */
+  .question {
+    margin-bottom: 20px;
+  }
+  .question:last-child { margin-bottom: 0; }
+  .question-text {
+    font-size: clamp(14px, 3vw, 16px);
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 12px;
+    line-height: 1.55;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .q-num {
+    background: var(--rose-light);
+    color: var(--rose-dark);
+    font-size: 11px;
+    font-weight: 800;
+    width: 24px; height: 24px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+  }
+
+  .option-btn {
+    padding: 14px 10px;
+    border-radius: var(--radius-sm);
+    border: 2px solid var(--border);
+    background: #fafafa;
+    cursor: pointer;
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: clamp(13px, 2.5vw, 15px);
+    font-weight: 500;
+    color: var(--text);
+    text-align: center;
+    transition: all 0.22s cubic-bezier(.4,0,.2,1);
+    position: relative;
+    overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+  .option-btn::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, var(--rose), var(--rose-dark));
+    opacity: 0;
+    transition: opacity 0.22s;
+  }
+  .option-btn span { position: relative; z-index: 1; }
+  .option-btn:hover {
+    border-color: var(--rose);
+    background: var(--rose-glow);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px var(--rose-glow);
+  }
+  .option-btn.selected {
+    border-color: var(--rose-dark);
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(224,92,122,0.35);
+  }
+  .option-btn.selected::before { opacity: 1; }
+  .option-btn.selected-never {
+    border-color: #27b082;
+    background: var(--green-light);
+    color: #1a7a5a;
+  }
+  .option-btn.selected-never:hover { transform: translateY(-2px); }
+  /* Frequency option layout */
+  .options.freq-4 { grid-template-columns: repeat(2, 1fr); }
+  @media(min-width: 500px) { .options.freq-4 { grid-template-columns: repeat(4, 1fr); } }
+
+  /* ── Navigation ── */
+  .nav-row {
+    display: flex;
+    gap: 12px;
+    justify-content: space-between;
+    margin-top: 28px;
+  }
+  .btn {
+    padding: 14px 28px;
+    border-radius: var(--radius-sm);
+    border: none;
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: clamp(14px, 2.8vw, 16px);
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.22s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .btn-back {
+    background: #f3e8ec;
+    color: var(--rose-dark);
+    flex: 0 0 auto;
+  }
+  .btn-back:hover { background: var(--rose-light); }
+  .btn-next {
+    background: linear-gradient(135deg, var(--rose), var(--rose-dark));
+    color: #fff;
+    flex: 1;
+    box-shadow: 0 4px 16px rgba(224,92,122,0.30);
+  }
+  .btn-next:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(224,92,122,0.40);
+  }
+  .btn-next:disabled {
+    background: #ddd;
+    color: #aaa;
+    box-shadow: none;
+    transform: none;
+    cursor: not-allowed;
+  }
+  .btn-result {
+    background: linear-gradient(135deg, #27b082, #1a7a5a);
+    box-shadow: 0 4px 16px rgba(39,176,130,0.30);
+  }
+  .btn-result:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(39,176,130,0.40);
+  }
+
+  /* ── Disclaimer ── */
+  .disclaimer {
+    background: linear-gradient(135deg, #fff8e1, #fff3cd);
+    border: 1.5px solid #ffe082;
+    border-radius: var(--radius-sm);
+    padding: 14px 18px;
+    font-size: 12px;
+    color: #7a5800;
+    line-height: 1.7;
+    margin-bottom: 20px;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .disclaimer-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+
+  /* ── Result ── */
+  #resultSection { display: none; }
+  #resultSection.active { display: block; }
+
+  .result-hero {
+    text-align: center;
+    padding: 36px 24px;
+    border-radius: var(--radius);
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .result-hero.level-low {
+    background: linear-gradient(135deg, #d4f5eb 0%, #e8faf5 100%);
+    border: 2px solid #27b082;
+  }
+  .result-hero.level-mid {
+    background: linear-gradient(135deg, #fef3e2 0%, #fff8ec 100%);
+    border: 2px solid #f59e42;
+  }
+  .result-hero.level-high {
+    background: linear-gradient(135deg, #fde8ea 0%, #fff0f4 100%);
+    border: 2px solid #e8374a;
+  }
+  .result-hero.level-very-high {
+    background: linear-gradient(135deg, #f8d7df 0%, #ffe0e8 100%);
+    border: 2px solid var(--rose-dark);
+  }
+  .result-emoji { font-size: 56px; margin-bottom: 12px; display: block; }
+  .result-level {
+    font-size: clamp(22px, 5vw, 30px);
+    font-weight: 900;
+    margin-bottom: 8px;
+  }
+  .result-score {
+    font-size: 14px;
+    opacity: 0.75;
+    margin-bottom: 10px;
+  }
+  .result-desc {
+    font-size: clamp(13px, 2.5vw, 15px);
+    line-height: 1.7;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  /* ── Score breakdown ── */
+  .score-breakdown {
+    background: var(--card);
+    border-radius: var(--radius);
+    border: 1.5px solid var(--border);
+    padding: 22px 24px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow);
+  }
+  .breakdown-title {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--text);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .breakdown-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid #f5eaed;
+    gap: 12px;
+  }
+  .breakdown-row:last-child { border-bottom: none; }
+  .breakdown-label { font-size: 14px; color: var(--text); font-weight: 500; flex: 1; }
+  .breakdown-bar-wrap { flex: 1.5; height: 8px; background: var(--rose-light); border-radius: 10px; overflow: hidden; }
+  .breakdown-bar { height: 100%; border-radius: 10px; transition: width 1s cubic-bezier(.4,0,.2,1); }
+  .bar-high { background: linear-gradient(90deg, #e8374a, #b03458); }
+  .bar-mid  { background: linear-gradient(90deg, #f59e42, #b35f00); }
+  .bar-low  { background: linear-gradient(90deg, #27b082, #1a7a5a); }
+  .breakdown-pts { font-size: 14px; font-weight: 800; color: var(--rose-dark); min-width: 40px; text-align: right; }
+
+  /* ── Toxin exposure list ── */
+  .toxin-section {
+    background: var(--card);
+    border-radius: var(--radius);
+    border: 1.5px solid var(--border);
+    padding: 22px 24px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow);
+  }
+  .toxin-title {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--text);
+    margin-bottom: 14px;
+  }
+  .toxin-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    margin: 4px;
+  }
+  .toxin-high { background: var(--red-light); color: var(--red); }
+  .toxin-mid  { background: var(--amber-light); color: #b35f00; }
+  .toxin-low  { background: var(--green-light); color: #1a7a5a; }
+
+  /* ── Recommendations ── */
+  .rec-section {
+    background: linear-gradient(135deg, #fff0f4, #fff8ec);
+    border-radius: var(--radius);
+    border: 1.5px solid var(--border);
+    padding: 22px 24px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow);
+  }
+  .rec-title {
+    font-size: 15px; font-weight: 800; color: var(--rose-dark); margin-bottom: 14px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .rec-item {
+    display: flex; gap: 12px; align-items: flex-start;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(224,92,122,0.12);
+    font-size: clamp(13px, 2.5vw, 14px);
+    line-height: 1.65;
+    color: var(--text);
+  }
+  .rec-item:last-child { border-bottom: none; padding-bottom: 0; }
+  .rec-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+
+  /* ── Medical disclaimer ── */
+  .medical-disclaimer {
+    background: #f3e8ec;
+    border-left: 4px solid var(--rose-dark);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    padding: 16px 18px;
+    font-size: 12px;
+    color: var(--rose-dark);
+    line-height: 1.75;
+    margin-bottom: 20px;
+  }
+
+  /* ── Restart ── */
+  .btn-restart {
+    width: 100%;
+    padding: 16px;
+    border-radius: var(--radius-sm);
+    border: 2px dashed var(--rose);
+    background: transparent;
+    color: var(--rose-dark);
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.22s;
+  }
+  .btn-restart:hover { background: var(--rose-light); }
+
+  /* ── Responsive ── */
+  @media (max-width: 480px) {
+    .app { padding: 12px 10px 48px; }
+    .section { padding: 20px 14px; }
+    .section-header { gap: 10px; }
+    .weight-tag { display: none; }
+    .score-breakdown, .toxin-section, .rec-section { padding: 16px 14px; }
+    .result-hero { padding: 28px 14px; }
+    .progress-wrap { padding: 14px 16px; }
+  }
+
+  /* ── Basic info inputs ── */
+  .info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  @media(max-width: 480px) { .info-grid { grid-template-columns: 1fr; } }
+  .info-field { display: flex; flex-direction: column; gap: 8px; }
+  .info-label {
+    font-size: 14px; font-weight: 700; color: var(--text);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .info-label .optional {
+    font-size: 11px; font-weight: 400;
+    color: var(--text-muted);
+    background: #f5eaed; padding: 2px 7px; border-radius: 10px;
+  }
+  .info-input {
+    padding: 13px 16px;
+    border: 2px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 15px;
+    color: var(--text);
+    background: #fafafa;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+    width: 100%;
+  }
+  .info-input:focus {
+    border-color: var(--rose);
+    box-shadow: 0 0 0 3px var(--rose-glow);
+    background: #fff;
+  }
+  .info-input::placeholder { color: #c4a0ad; }
+  .menopause-options {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  @media(max-width: 380px) { .menopause-options { grid-template-columns: 1fr; } }
+  .menopause-btn {
+    padding: 12px 8px;
+    border-radius: var(--radius-sm);
+    border: 2px solid var(--border);
+    background: #fafafa;
+    cursor: pointer;
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    text-align: center;
+    transition: all 0.22s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .menopause-btn:hover { border-color: var(--rose); background: var(--rose-glow); }
+  .menopause-btn.selected {
+    border-color: var(--rose-dark);
+    background: linear-gradient(135deg, var(--rose), var(--rose-dark));
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(224,92,122,0.30);
+  }
+  .info-note {
+    background: var(--green-light);
+    border-left: 3px solid var(--green);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    padding: 12px 16px;
+    font-size: 12px;
+    color: #1a7a5a;
+    line-height: 1.7;
+    margin-top: 4px;
+  }
+  .info-section-full { grid-column: 1 / -1; }
+
+  /* ── AI Advice Section ── */
+  .ai-section {
+    background: linear-gradient(135deg, #1a1a2e 0%, #2d1a24 100%);
+    border-radius: var(--radius);
+    border: 1.5px solid #b03458;
+    padding: 22px 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 32px rgba(176,52,88,0.25);
+  }
+  .ai-title {
+    font-size: 16px; font-weight: 800; color: #fff;
+    margin-bottom: 4px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .ai-subtitle {
+    font-size: 12px; color: #c4a0ad; margin-bottom: 16px;
+  }
+  .ai-content {
+    background: rgba(255,255,255,0.06);
+    border-radius: var(--radius-sm);
+    padding: 16px 18px;
+    min-height: 80px;
+  }
+  .ai-loading {
+    display: flex; align-items: center; gap: 12px;
+    color: #c4a0ad; font-size: 14px;
+  }
+  .ai-spinner {
+    width: 20px; height: 20px;
+    border: 2px solid rgba(224,92,122,0.3);
+    border-top-color: var(--rose);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    flex-shrink: 0;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .ai-text {
+    color: #f0e0e6;
+    font-size: 14px;
+    line-height: 1.85;
+    white-space: pre-wrap;
+  }
+  .ai-error {
+    color: #f08080; font-size: 13px; line-height: 1.7;
+  }
+  @media (max-width: 480px) { .ai-section { padding: 16px 14px; } }
+
+  /* ── Toast Notification ── */
+  .toast {
+    position: fixed;
+    top: 20px; left: 50%; transform: translateX(-50%) translateY(-80px);
+    background: #2d1a24;
+    color: #fff;
+    padding: 14px 24px;
+    border-radius: 30px;
+    font-size: 14px; font-weight: 600;
+    box-shadow: 0 8px 32px rgba(176,52,88,0.35);
+    border: 1.5px solid var(--rose);
+    z-index: 9999;
+    display: flex; align-items: center; gap: 10px;
+    transition: transform 0.35s cubic-bezier(.4,0,.2,1), opacity 0.35s;
+    opacity: 0;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+  .toast.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+  .toast-icon { font-size: 18px; }
+
+  /* ── Answer required hint ── */
+  .hint {
+    font-size: 12px; color: #c0392b;
+    margin-top: 8px; display: none;
+    animation: shake 0.3s ease;
+  }
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    25% { transform: translateX(-4px); }
+    75% { transform: translateX(4px); }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Toast -->
+  <div class="toast" id="toast">
+    <span class="toast-icon">⚠️</span>
+    <span id="toastMsg">尚未填寫完畢，請完成所有題目</span>
+  </div>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-badge">🎗️ 乳癌風險評估</div>
+    <h1>乳癌高風險<br>自我評估系統</h1>
+    <p>根據機器學習模型研究設計，透過生活習慣問卷評估您的環境毒素暴露風險，僅供健康意識提升參考。</p>
+    <!-- AUC badge hidden -->
+  <!-- <div class="auc-badge">模型 AUC <span>0.894</span>（鑑別力優良）</div> -->
+  </div>
+
+  <!-- Disclaimer -->
+  <div class="disclaimer">
+    <span class="disclaimer-icon">⚠️</span>
+    <div><strong>重要聲明：</strong>本系統僅供健康意識參考，<strong>不能取代醫療診斷</strong>。如您有乳癌相關疑慮，請務必諮詢合格醫療專業人員。</div>
+  </div>
+
+  <!-- Progress -->
+  <div class="progress-wrap">
+    <div class="progress-info">
+      <span class="progress-label" id="progressLabel">基本資料</span>
+      <span class="progress-step" id="progressStep">1 / 4</span>
+    </div>
+    <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressBar" style="width:25%"></div></div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       SECTION 0：基本資料（不計分）
+  ══════════════════════════════════════ -->
+  <div class="section active" id="sec0">
+    <div class="section-header">
+      <div class="section-icon icon-low">📋</div>
+      <div class="section-title-wrap">
+        <h2>基本資料</h2>
+        <p>此部分資料僅供收案記錄，不納入風險計算</p>
+      </div>
+    </div>
+
+    <div class="info-grid">
+      <div class="info-field">
+        <label class="info-label">🎂 年齡 <span class="optional">選填</span></label>
+        <input class="info-input" id="infoAge" type="number" placeholder="例：45" min="18" max="100">
+      </div>
+      <div class="info-field">
+        <label class="info-label">🩺 停經狀態 <span class="optional">選填</span></label>
+        <div class="menopause-options" style="grid-template-columns: repeat(2, 1fr);">
+          <button class="menopause-btn" onclick="selectMenopause('未停經',this)">未停經</button>
+          <button class="menopause-btn" onclick="selectMenopause('已停經',this)">已停經</button>
+        </div>
+      </div>
+      <div class="info-field info-section-full">
+        <label class="info-label">👨‍👩‍👧 有無乳癌家族病史 <span class="optional">選填</span></label>
+        <div class="menopause-options" style="grid-template-columns: repeat(2, 1fr);">
+          <button class="menopause-btn" onclick="selectFamily('無',this)">無</button>
+          <button class="menopause-btn" onclick="selectFamily('有',this)">有</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-note">
+      ℹ️ 以上基本資料<strong>不會影響風險評分</strong>，採匿名方式蒐集，僅作為後台資料收案紀錄使用。所有欄位皆為選填，可直接跳過進入問卷。
+    </div>
+
+    <div class="nav-row">
+      <button class="btn btn-next" onclick="goSection(1)">開始填寫問卷 →</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       SECTION 1：高權重 塑化劑類 (×3分)
+  ══════════════════════════════════════ -->
+  <div class="section" id="sec1">
+    <div class="section-header">
+      <div class="section-icon icon-high">🧴</div>
+      <div class="section-title-wrap">
+        <h2>塑化劑暴露習慣</h2>
+      </div>
+    </div>
+
+    <div class="question" data-key="q1">
+      <div class="question-text"><span class="q-num">1</span>您是否常使用塑膠杯、保麗龍容器裝熱飲或熱食？</div>
+      <div class="options freq-4">
+        <button class="option-btn" onclick="answer('q1','從不',0,this)"><span>從不</span></button>
+        <button class="option-btn" onclick="answer('q1','偶爾',1,this)"><span>偶爾<br><small style="font-size:11px;opacity:.7">每月1-2次</small></span></button>
+        <button class="option-btn" onclick="answer('q1','經常',2,this)"><span>經常<br><small style="font-size:11px;opacity:.7">每週1-3次</small></span></button>
+        <button class="option-btn" onclick="answer('q1','每天',3,this)"><span>每天</span></button>
+      </div>
+      <div class="hint" id="hint-q1">⚠️ 請選擇一個選項</div>
+    </div>
+
+    <div class="question" data-key="q2">
+      <div class="question-text"><span class="q-num">2</span>您是否使用香水、香精或含人工香氛的產品（含洗沐品）？</div>
+      <div class="options freq-4">
+        <button class="option-btn" onclick="answer('q2','從不',0,this)"><span>從不</span></button>
+        <button class="option-btn" onclick="answer('q2','偶爾',1,this)"><span>偶爾</span></button>
+        <button class="option-btn" onclick="answer('q2','經常',2,this)"><span>經常</span></button>
+        <button class="option-btn" onclick="answer('q2','每天',3,this)"><span>每天</span></button>
+      </div>
+      <div class="hint" id="hint-q2">⚠️ 請選擇一個選項</div>
+    </div>
+
+    <div class="question" data-key="q3">
+      <div class="question-text"><span class="q-num">3</span>您是否每天使用含化學防曬劑的防曬乳（如 Oxybenzone）？</div>
+      <div class="options freq-4">
+        <button class="option-btn" onclick="answer('q3','從不',0,this)"><span>從不</span></button>
+        <button class="option-btn" onclick="answer('q3','偶爾',1,this)"><span>偶爾</span></button>
+        <button class="option-btn" onclick="answer('q3','經常',2,this)"><span>經常</span></button>
+        <button class="option-btn" onclick="answer('q3','每天',3,this)"><span>每天</span></button>
+      </div>
+      <div class="hint" id="hint-q3">⚠️ 請選擇一個選項</div>
+    </div>
+
+    <div class="question" data-key="q4">
+      <div class="question-text"><span class="q-num">4</span>您是否有染髮習慣？（含美髮院）</div>
+      <div class="options freq-4">
+        <button class="option-btn" onclick="answer('q4','從不',0,this)"><span>從不</span></button>
+        <button class="option-btn" onclick="answer('q4','偶爾',1,this)"><span>偶爾<br><small style="font-size:11px;opacity:.7">每年1-2次</small></span></button>
+        <button class="option-btn" onclick="answer('q4','經常',2,this)"><span>經常<br><small style="font-size:11px;opacity:.7">每季</small></span></button>
+        <button class="option-btn" onclick="answer('q4','頻繁',3,this)"><span>頻繁<br><small style="font-size:11px;opacity:.7">每月</small></span></button>
+      </div>
+      <div class="hint" id="hint-q4">⚠️ 請選擇一個選項</div>
+    </div>
+
+    <div class="question" data-key="q5">
+      <div class="question-text"><span class="q-num">5</span>您家中浴室/廚房是否使用 PVC 軟管或 PVC 材質浴簾？</div>
+      <div class="options">
+        <button class="option-btn" onclick="answer('q5','否/不清楚',0,this)"><span>否／不清楚</span></button>
+        <button class="option-btn" onclick="answer('q5','部分是',2,this)"><span>部分是</span></button>
+        <button class="option-btn" onclick="answer('q5','是',3,this)"><span>是</span></button>
+      </div>
+      <div class="hint" id="hint-q5">⚠️ 請選擇一個選項</div>
+    </div>
+
+    <div class="nav-row">
+      <button class="btn btn-next" id="next1" onclick="goSection(2)">下一部分 →</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       SECTION 2：中高權重 重金屬/抗生素 (×2分)
+  ══════════════════════════════════════ -->
+  <div class="section" id="sec2">
+    <div class="section-header">
+      <div class="section-icon icon-mid">🦐</div>
+      <div class="section-title-wrap">
+        <h2>重金屬暴露習慣</h2>
+      </div>
+      <div class="weight-tag weight-mid" style="display:none">每題 +2分</div>
+    </div>
+
+    <div class="question" data-key="q6">
+      <div class="question-text"><span class="q-num">6</span>您每週食用海鮮（魚、蝦、貝類等）的頻率？</div>
+      <div class="options freq-4">
+        <button class="option-btn" onclick="answer('q6','從不',0,this)"><span>從不</span></button>
+        <button class="option-btn" onclick="answer('q6','偶爾',1,this)"><span>偶爾<br><small style="font-size:11px;opacity:.7">每週1次以下</small></span></button>
+        <button class="option-btn" onclick="answer('q6','經常',2,this)"><span>經常<br><small style="font-size:11px;opacity:.7">每週2-4次</small></span></button>
+        <button class="option-btn" onclick="answer('q6','每天',2,this)"><span>幾乎每天</span></button>
+      </div>
+      <div class="hint" id="hint-q6">⚠️ 請選擇一個選項</div>
+    </div>
+
+    <div class="question" data-key="q7">
+      <div class="question-text"><span class="q-num">7</span>您是否長期服用中藥、藥膳或來源不明的草藥補品？</div>
+      <div class="options freq-4">
+        <button class="option-btn" onclick="answer('q7','從不',0,this)"><span>從不</span></button>
+        <button class="option-btn" onclick="answer('q7','偶爾',1,this)"><span>偶爾</span></button>
+        <button class="option-btn" onclick="answer('q7','經常',2,this)"><span>經常</span></button>
+        <button class="option-btn" onclick="answer('q7','長期',2,this)"><span>長期服用</span></button>
+      </div>
+      <div class="hint" id="hint-q7">⚠️ 請選擇一個選項</div>
+    </div>
+
+    <div class="question" data-key="q8">
+      <div class="question-text"><span class="q-num">8</span>您居住或工作地點是否鄰近工廠、焚化爐、採礦區或其他污染源？</div>
+      <div class="options">
+        <button class="option-btn" onclick="answer('q8','否',0,this)"><span>否</span></button>
+        <button class="option-btn" onclick="answer('q8','不確定',1,this)"><span>不確定</span></button>
+        <button class="option-btn" onclick="answer('q8','是',2,this)"><span>是</span></button>
+      </div>
+      <div class="hint" id="hint-q8">⚠️ 請選擇一個選項</div>
+    </div>
+
+    <div class="question" data-key="q9">
+      <div class="question-text"><span class="q-num">9</span>您的飲用水是否為非自來水水源（如地下水、山泉水或未經檢驗水源）？</div>
+      <div class="options">
+        <button class="option-btn" onclick="answer('q9','否（自來水）',0,this)"><span>否（自來水）</span></button>
+        <button class="option-btn" onclick="answer('q9','過濾水',0,this)"><span>有過濾設備</span></button>
+        <button class="option-btn" onclick="answer('q9','是',2,this)"><span>是</span></button>
+      </div>
+      <div class="hint" id="hint-q9">⚠️ 請選擇一個選項</div>
+    </div>
+
+    <div class="question" data-key="q10">
+      <div class="question-text"><span class="q-num">10</span>您的職業是否需要長期接觸化學品、農藥、重金屬或醫療物資（PVC手套、管路）？</div>
+      <div class="options">
+        <button class="option-btn" onclick="answer('q10','否',0,this)"><span>否</span></button>
+        <button class="option-btn" onclick="answer('q10','偶爾接觸',1,this)"><span>偶爾接觸</span></button>
+        <button class="option-btn" onclick="answer('q10','長期接觸',2,this)"><span>長期接觸</span></button>
+      </div>
+      <div class="hint" id="hint-q10">⚠️ 請選擇一個選項</div>
+    </div>
+
+    <div class="nav-row">
+      <button class="btn btn-back" onclick="goSection(1)">← 上一頁</button>
+      <button class="btn btn-next" id="next2" onclick="goSection(3)">下一部分 →</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       SECTION 3：參考組 一般生活習慣 (×1分)
+  ══════════════════════════════════════ -->
+  <div class="section" id="sec3">
+    <div class="section-header">
+      <div class="section-icon icon-low">🌿</div>
+      <div class="section-title-wrap">
+        <h2>一般生活習慣</h2>
+      </div>
+      <div class="weight-tag weight-low" style="display:none">每題 +1分</div>
+    </div>
+
+    <div class="question" data-key="q11">
+      <div class="question-text"><span class="q-num">11</span>您是否有抽菸，或長期暴露於二手菸環境？</div>
+      <div class="options">
+        <button class="option-btn" onclick="answer('q11','從不且無二手菸',0,this)"><span>從不且無二手菸</span></button>
+        <button class="option-btn" onclick="answer('q11','有二手菸暴露',1,this)"><span>有二手菸暴露</span></button>
+        <button class="option-btn" onclick="answer('q11','有吸菸習慣',1,this)"><span>有吸菸習慣</span></button>
+      </div>
+      <div class="hint" id="hint-q11">⚠️ 請選擇一個選項</div>
+    </div>
+
+    <div class="question" data-key="q12">
+      <div class="question-text"><span class="q-num">12</span>您是否經常食用燒烤、油炸、煙燻或醃製食物？</div>
+      <div class="options freq-4">
+        <button class="option-btn" onclick="answer('q12','從不',0,this)"><span>從不</span></button>
+        <button class="option-btn" onclick="answer('q12','偶爾',0,this)"><span>偶爾<br><small style="font-size:11px;opacity:.7">每月2次以下</small></span></button>
+        <button class="option-btn" onclick="answer('q12','每週',1,this)"><span>每週<br><small style="font-size:11px;opacity:.7">1-2次</small></span></button>
+        <button class="option-btn" onclick="answer('q12','多次',1,this)"><span>多次<br><small style="font-size:11px;opacity:.7">每週3次以上</small></span></button>
+      </div>
+      <div class="hint" id="hint-q12">⚠️ 請選擇一個選項</div>
+    </div>
+
+    <div class="question" data-key="q13">
+      <div class="question-text"><span class="q-num">13</span>您是否常食用火鍋或泡麵？</div>
+      <div class="options freq-4">
+        <button class="option-btn" onclick="answer('q13','從不',0,this)"><span>從不</span></button>
+        <button class="option-btn" onclick="answer('q13','偶爾',0,this)"><span>偶爾</span></button>
+        <button class="option-btn" onclick="answer('q13','每週',1,this)"><span>每週</span></button>
+        <button class="option-btn" onclick="answer('q13','每天',1,this)"><span>幾乎每天</span></button>
+      </div>
+      <div class="hint" id="hint-q13">⚠️ 請選擇一個選項</div>
+    </div>
+
+    <div class="question" data-key="q14">
+      <div class="question-text"><span class="q-num">14</span>您的主要通勤或交通方式為何？</div>
+      <div class="options">
+        <button class="option-btn" onclick="answer('q14','步行/自行車',0,this)"><span>步行／自行車</span></button>
+        <button class="option-btn" onclick="answer('q14','大眾運輸',0,this)"><span>大眾運輸<br><small style="font-size:11px;opacity:.7">捷運／公車</small></span></button>
+        <button class="option-btn" onclick="answer('q14','汽車/機車',1,this)"><span>汽車／機車<br><small style="font-size:11px;opacity:.7">私人車輛</small></span></button>
+      </div>
+      <div class="hint" id="hint-q14">⚠️ 請選擇一個選項</div>
+    </div>
+
+    <div class="question" data-key="q15">
+      <div class="question-text"><span class="q-num">15</span>您是否有使用農藥、除草劑（農業或家庭園藝）？</div>
+      <div class="options">
+        <button class="option-btn" onclick="answer('q15','從不',0,this)"><span>從不</span></button>
+        <button class="option-btn" onclick="answer('q15','偶爾',1,this)"><span>偶爾使用</span></button>
+        <button class="option-btn" onclick="answer('q15','頻繁',1,this)"><span>頻繁使用</span></button>
+      </div>
+      <div class="hint" id="hint-q15">⚠️ 請選擇一個選項</div>
+    </div>
+
+    <div class="nav-row">
+      <button class="btn btn-back" onclick="goSection(2)">← 上一頁</button>
+      <button class="btn btn-next btn-result" id="next3" onclick="showResult()">查看評估結果 ✓</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       RESULT SECTION
+  ══════════════════════════════════════ -->
+  <div class="section" id="resultSection">
+
+    <div id="resultHero" class="result-hero">
+      <span class="result-emoji" id="resultEmoji">🎗️</span>
+      <div class="result-level" id="resultLevel">計算中...</div>
+      <div class="result-score" id="resultScore"></div>
+      <div class="result-desc" id="resultDesc"></div>
+      <div id="recordId" style="display:none!important;"></div>
+      <div id="submitStatus" style="margin-top:8px; font-size:12px; color:#9c7a88;"></div>
+    </div>
+
+    <!-- Score breakdown -->
+    <div class="score-breakdown">
+      <div class="breakdown-title">📊 各類別得分分析</div>
+      <div class="breakdown-row">
+        <div class="breakdown-label">🧴 塑化劑暴露</div>
+        <div class="breakdown-bar-wrap"><div class="breakdown-bar bar-high" id="bar1" style="width:0%"></div></div>
+        <div class="breakdown-pts" id="pts1">0分</div>
+      </div>
+      <div class="breakdown-row">
+        <div class="breakdown-label">🦐 重金屬暴露</div>
+        <div class="breakdown-bar-wrap"><div class="breakdown-bar bar-mid" id="bar2" style="width:0%"></div></div>
+        <div class="breakdown-pts" id="pts2">0分</div>
+      </div>
+      <div class="breakdown-row">
+        <div class="breakdown-label">🌿 一般生活習慣</div>
+        <div class="breakdown-bar-wrap"><div class="breakdown-bar bar-low" id="bar3" style="width:0%"></div></div>
+        <div class="breakdown-pts" id="pts3">0分</div>
+      </div>
+    </div>
+
+    <!-- Toxin chips -->
+    <div class="toxin-section" id="toxinSection">
+      <div class="toxin-title">⚗️ 您可能的環境毒素暴露</div>
+      <div id="toxinChips"></div>
+    </div>
+
+    <!-- Recommendations -->
+    <div class="rec-section">
+      <div class="rec-title">💡 改善建議</div>
+      <div id="recList"></div>
+    </div>
+
+    <!-- AI Personalized Advice (hidden, reserved for future use) -->
+    <div class="ai-section" id="aiSection" style="display:none">
+      <div class="ai-title">🤖 AI 個人化建議</div>
+      <div class="ai-subtitle">根據您的作答，由 AI 分析圖5-4路徑產生專屬建議</div>
+      <div id="aiContent" class="ai-content">
+        <div class="ai-loading">
+          <div class="ai-spinner"></div>
+          <span>AI 正在分析您的暴露風險路徑...</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Medical disclaimer -->
+    <div class="medical-disclaimer">
+      ⚕️ <strong>醫療免責聲明：</strong>本評估系統基於研究數據設計，僅作為健康意識提升工具，不具醫療診斷效力。乳癌風險受遺傳基因（BRCA1/2）、年齡、荷爾蒙、家族史等多重因素影響，本問卷未涵蓋所有風險因子。如有任何疑慮，請立即諮詢乳房外科或腫瘤科醫師，進行乳房超音波或乳房攝影等專業檢查。
+    </div>
+
+    <button class="btn-restart" onclick="restart()">🔄 重新評估</button>
+  </div>
+
+</div>
+
+<script>
+const answers = {};
+const basicInfo = { age: '', menopause: '', family: '' };
+const MAX_SCORES = { sec1: 15, sec2: 10, sec3: 5 };
+
+function selectMenopause(val, btn) {
+  btn.closest('.menopause-options').querySelectorAll('.menopause-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  basicInfo.menopause = val;
+}
+
+function selectFamily(val, btn) {
+  btn.closest('.menopause-options').querySelectorAll('.menopause-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  basicInfo.family = val;
+}
+
+function answer(key, label, score, btn) {
+  const parent = btn.closest('.question');
+  parent.querySelectorAll('.option-btn').forEach(b => {
+    b.classList.remove('selected', 'selected-never');
+  });
+  if (score === 0) {
+    btn.classList.add('selected-never');
+  } else {
+    btn.classList.add('selected');
+  }
+  answers[key] = { label, score };
+  document.getElementById('hint-' + key).style.display = 'none';
+}
+
+function getSectionKeys(sec) {
+  if (sec === 1) return ['q1','q2','q3','q4','q5'];
+  if (sec === 2) return ['q6','q7','q8','q9','q10'];
+  if (sec === 3) return ['q11','q12','q13','q14','q15'];
+}
+
+let toastTimer = null;
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  document.getElementById('toastMsg').textContent = msg;
+  toast.classList.add('show');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove('show'), 2800);
+}
+
+function validateSection(sec) {
+  if (sec === 0) return true;
+  const keys = getSectionKeys(sec);
+  let valid = true;
+  keys.forEach(k => {
+    if (!answers[k]) {
+      document.getElementById('hint-' + k).style.display = 'block';
+      valid = false;
+    }
+  });
+  if (!valid) showToast('尚未填寫完畢，請完成所有題目 ✏️');
+  return valid;
+}
+
+function goSection(n) {
+  const from = n - 1;
+  if (from >= 1 && !validateSection(from)) return;
+
+  // save basic info when leaving sec0
+  if (from === 0) {
+    basicInfo.age = document.getElementById('infoAge').value;
+  }
+
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  if (n <= 3) {
+    document.getElementById('sec' + n).classList.add('active');
+  }
+
+  const labels = ['基本資料','第 1 部分，共 3 部分','第 2 部分，共 3 部分','第 3 部分，共 3 部分'];
+  const steps  = ['1 / 4','2 / 4','3 / 4','4 / 4'];
+  const pcts   = [25, 50, 75, 100];
+  document.getElementById('progressLabel').textContent = labels[n] || labels[3];
+  document.getElementById('progressStep').textContent  = steps[n]  || steps[3];
+  document.getElementById('progressBar').style.width   = pcts[n] + '%';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function calcScores() {
+  let s1 = 0, s2 = 0, s3 = 0;
+  ['q1','q2','q3','q4','q5'].forEach(k => { if (answers[k]) s1 += answers[k].score; });
+  ['q6','q7','q8','q9','q10'].forEach(k => { if (answers[k]) s2 += answers[k].score; });
+  ['q11','q12','q13','q14','q15'].forEach(k => { if (answers[k]) s3 += answers[k].score; });
+  // weight multiply
+  return { raw1: s1, raw2: s2, raw3: s3, total: s1 * 3 + s2 * 2 + s3 };
+}
+
+function showResult() {
+  if (!validateSection(3)) return;
+
+  const { raw1, raw2, raw3, total } = calcScores();
+  const MAX = 70;
+  const wS1 = raw1 * 3, wS2 = raw2 * 2, wS3 = raw3;
+
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  const rs = document.getElementById('resultSection');
+  rs.style.display = 'block';
+  rs.classList.add('active');
+
+  // Level
+  let emoji, level, colorClass, desc;
+  if (total <= 14) {
+    emoji = '🟢'; level = '低風險'; colorClass = 'level-low';
+    desc = '您目前的生活習慣中，環境毒素暴露量相對較低。建議維持健康飲食習慣，定期進行乳房自我檢查。';
+  } else if (total <= 28) {
+    emoji = '🟡'; level = '中低風險'; colorClass = 'level-mid';
+    desc = '您的生活習慣中存在部分環境毒素暴露風險。建議參考下方改善建議，並每年進行乳房超音波檢查。';
+  } else if (total <= 42) {
+    emoji = '🟠'; level = '中高風險'; colorClass = 'level-high';
+    desc = '您的生活習慣中有多項高風險暴露因子。強烈建議儘速諮詢醫師，並積極改善高分項目的暴露習慣。';
+  } else {
+    emoji = '🔴'; level = '高風險'; colorClass = 'level-very-high';
+    desc = '您的評估顯示多項高風險暴露習慣。請務必儘快就醫進行乳房攝影或超音波專業檢查，並諮詢醫師評估。';
+  }
+
+  const hero = document.getElementById('resultHero');
+  hero.className = 'result-hero ' + colorClass;
+  document.getElementById('resultEmoji').textContent = emoji;
+  document.getElementById('resultLevel').textContent = level;
+  document.getElementById('resultScore').textContent = '總評分：' + total + ' 分（滿分 ' + MAX + ' 分）';
+  document.getElementById('resultDesc').textContent = desc;
+
+  // Bars
+  setTimeout(() => {
+    document.getElementById('bar1').style.width = Math.min(100, wS1 / (15 * 3) * 100) + '%';
+    document.getElementById('bar2').style.width = Math.min(100, wS2 / (10 * 2) * 100) + '%';
+    document.getElementById('bar3').style.width = Math.min(100, wS3 / 5 * 100) + '%';
+  }, 200);
+  document.getElementById('pts1').textContent = wS1 + '分';
+  document.getElementById('pts2').textContent = wS2 + '分';
+  document.getElementById('pts3').textContent = wS3 + '分';
+
+  // Toxin chips
+  const chips = [];
+  if (raw1 > 0) {
+    if (answers.q1?.score > 0) chips.push({t:'Bisphenol-A / Bisphenol-S', level:'high'});
+    if (answers.q2?.score > 0) chips.push({t:'Oxybenzone（防曬化學物）', level:'high'});
+    if (answers.q3?.score > 0) chips.push({t:'Oxybenzone（防曬）', level:'high'});
+    if (answers.q4?.score > 0) chips.push({t:'PPD 芳香環胺類（染髮劑）', level:'high'});
+    if (answers.q5?.score > 0) chips.push({t:'DEHP / 鄰苯二甲酸酯 (PVC)', level:'high'});
+  }
+  if (raw2 > 0) {
+    if (answers.q6?.score > 0) chips.push({t:'重金屬（鉛、鎘、汞）', level:'mid'});
+    if (answers.q7?.score > 0) chips.push({t:'氯黴素 / 青黴素（中藥殘留）', level:'mid'});
+    if (answers.q8?.score > 0) chips.push({t:'工業污染物、重金屬', level:'mid'});
+    if (answers.q9?.score > 0) chips.push({t:'水中重金屬污染', level:'mid'});
+    if (answers.q10?.score > 0) chips.push({t:'職業性化學暴露', level:'mid'});
+  }
+  if (raw3 > 0) {
+    if (answers.q11?.score > 0) chips.push({t:'尼古丁、焦油（菸草）', level:'low'});
+    if (answers.q12?.score > 0) chips.push({t:'丙烯醯胺、硝酸鹽（高溫烹調）', level:'low'});
+    if (answers.q13?.score > 0) chips.push({t:'環氧乙烷、丙烯醯胺（加工食品）', level:'low'});
+    if (answers.q14?.score > 0) chips.push({t:'多環芳香烴（廢氣）、懸浮微粒PM', level:'low'});
+    if (answers.q15?.score > 0) chips.push({t:'農藥殘留、除草劑', level:'low'});
+  }
+
+  const chipsHTML = chips.length
+    ? chips.map(c => `<span class="toxin-chip toxin-${c.level}">${c.t}</span>`).join('')
+    : '<span style="font-size:14px;color:#27b082;">✅ 未偵測到明顯毒素暴露風險</span>';
+  document.getElementById('toxinChips').innerHTML = chipsHTML;
+
+  // Recommendations
+  const recs = [];
+  if (answers.q1?.score > 0 || answers.q5?.score > 0)
+    recs.push({icon:'🥤', text:'改用不鏽鋼、玻璃或陶瓷容器裝飲料，避免塑膠杯裝熱飲，降低 BPA 暴露。'});
+  if (answers.q2?.score > 0 || answers.q3?.score > 0)
+    recs.push({icon:'🧴', text:'選擇不含 Oxybenzone 的物理性防曬（如氧化鋅），盡量使用無人工香精的天然保養品。'});
+  if (answers.q4?.score > 0)
+    recs.push({icon:'💇', text:'染髮間隔建議延長至6個月以上，選擇不含 PPD 的天然染劑，或使用指甲花等天然染料。'});
+  if (answers.q6?.score > 0)
+    recs.push({icon:'🐟', text:'避免食用大型深海魚（如旗魚、鮪魚），選擇小型魚類，每週海鮮攝取以2次以下為宜。'});
+  if (answers.q7?.score > 0)
+    recs.push({icon:'🌿', text:'中藥材請選擇有信譽的合法藥房或中醫診所，避免來源不明的草藥補品。'});
+  if (answers.q12?.score > 0 || answers.q13?.score > 0)
+    recs.push({icon:'🥦', text:'增加十字花科蔬菜（花椰菜、高麗菜）和柑橘類水果的攝取，減少高溫燒烤及加工食品。'});
+  if (answers.q11?.score > 0)
+    recs.push({icon:'🚭', text:'戒菸或遠離二手菸環境，如有戒菸需求可至醫院戒菸門診尋求協助。'});
+  if (total > 8)
+    recs.push({icon:'🏃', text:'建議每週規律運動3次以上，每次30分鐘，如快走、游泳、騎腳踏車，有助降低乳癌風險。'});
+  recs.push({icon:'🩺', text:'建議每年進行乳房超音波檢查；40歲以上女性每2年接受政府補助之乳房X光攝影篩檢。'});
+
+  document.getElementById('recList').innerHTML = recs.map(r =>
+    `<div class="rec-item"><span class="rec-icon">${r.icon}</span><span>${r.text}</span></div>`
+  ).join('');
+
+  document.getElementById('progressLabel').textContent = '評估完成';
+  document.getElementById('progressStep').textContent = '✓';
+  document.getElementById('progressBar').style.width = '100%';
+
+  // AI 建議暫時停用，直接送出資料
+  submitToSheet({ wS1, wS2, wS3, total, level, aiAdvice: '' });
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+async function fetchAIAdvice(payload, level) {
+  const age       = basicInfo.age       ? `年齡 ${basicInfo.age} 歲` : '年齡未填';
+  const menopause = basicInfo.menopause ? `停經狀態：${basicInfo.menopause}` : '';
+  const family    = basicInfo.family    ? `乳癌家族病史：${basicInfo.family}` : '';
+
+  const answerSummary = [
+    `Q1 塑膠杯熱飲：${answers.q1?.label||''}`,
+    `Q2 香水香氛：${answers.q2?.label||''}`,
+    `Q3 防曬乳：${answers.q3?.label||''}`,
+    `Q4 染髮：${answers.q4?.label||''}`,
+    `Q5 PVC管路：${answers.q5?.label||''}`,
+    `Q6 海鮮頻率：${answers.q6?.label||''}`,
+    `Q7 中藥補品：${answers.q7?.label||''}`,
+    `Q8 污染源鄰近：${answers.q8?.label||''}`,
+    `Q9 飲用水來源：${answers.q9?.label||''}`,
+    `Q10 職業接觸：${answers.q10?.label||''}`,
+    `Q11 抽菸/二手菸：${answers.q11?.label||''}`,
+    `Q12 燒烤油炸：${answers.q12?.label||''}`,
+    `Q13 火鍋泡麵：${answers.q13?.label||''}`,
+    `Q14 交通方式：${answers.q14?.label||''}`,
+    `Q15 農藥除草劑：${answers.q15?.label||''}`
+  ].join('\n');
+
+  const prompt = `你是一位乳癌預防衛教專家。以下是一位使用者的乳癌風險問卷結果，請根據「圖5-4 生活習慣與乳癌危險因子關聯圖」的三條風險路徑（重金屬路徑、塑化劑路徑、高溫烹調路徑），為這位使用者提供個人化的生活改善建議。
+
+【基本資料】
+${age}${menopause ? '、' + menopause : ''}${family ? '、' + family : ''}
+風險等級：${level}
+塑化劑暴露分數：${payload.score1}分
+重金屬暴露分數：${payload.score2}分
+一般生活習慣分數：${payload.score3}分
+總分：${payload.total}分
+
+【各題作答】
+${answerSummary}
+
+請依照以下格式回覆（繁體中文，語氣溫和專業，不超過350字）：
+
+🔴 您的主要風險路徑
+（說明使用者得分最高的路徑及原因，1-2句）
+
+✅ 優先改善建議
+（針對得分高的題目，條列3-4項最重要的具體行動建議）
+
+🥗 飲食調整方向
+（根據圖5-4治療飲食建議，給出2-3項個人化飲食建議）
+
+⚕️ 追蹤提醒
+（根據年齡與風險等級，給出1句就醫或追蹤提醒）
+
+注意：最後請加上「本建議僅供參考，不能取代醫療診斷。」`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const data = await res.json();
+    return data.content?.[0]?.text || null;
+  } catch (e) {
+    return null;
+  }
+}
+
+function submitToSheet({ wS1, wS2, wS3, total, level, aiAdvice }) {
+  const SHEET_URL = 'https://script.google.com/macros/s/AKfycbzWf0DTDX88QLE7hhkuk83G4Z0jGvhtA9OIOlrcuhyzniH2SXrMCVnVc2bdC8dtUeM/exec';
+
+  const payload = {
+    age:      basicInfo.age || '',
+    menopause: basicInfo.menopause || '',
+    family:   basicInfo.family || '',
+    score1:   wS1,
+    score2:   wS2,
+    score3:   wS3,
+    total:    total,
+    level:    level,
+    q1:  answers.q1?.label  || '',
+    q2:  answers.q2?.label  || '',
+    q3:  answers.q3?.label  || '',
+    q4:  answers.q4?.label  || '',
+    q5:  answers.q5?.label  || '',
+    q6:  answers.q6?.label  || '',
+    q7:  answers.q7?.label  || '',
+    q8:  answers.q8?.label  || '',
+    q9:  answers.q9?.label  || '',
+    q10: answers.q10?.label || '',
+    q11: answers.q11?.label || '',
+    q12: answers.q12?.label || '',
+    q13: answers.q13?.label || '',
+    q14: answers.q14?.label || '',
+    q15: answers.q15?.label || '',
+    aiAdvice: aiAdvice || ''
+  };
+
+  document.getElementById('submitStatus').textContent = '⏳ 資料上傳中...';
+
+  fetch(SHEET_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  })
+  .then(() => {
+    // no-cors 無法讀回 ID，改用本地產生顯示
+    document.getElementById('submitStatus').textContent = '✅ 資料已成功送出';
+  })
+  .catch(() => {
+    document.getElementById('submitStatus').textContent = '⚠️ 資料送出失敗，請截圖保存結果';
+  });
+}
+
+function restart() {
+  Object.keys(answers).forEach(k => delete answers[k]);
+  basicInfo.age = ''; basicInfo.menopause = ''; basicInfo.family = '';
+  document.getElementById('infoAge').value = '';
+  document.querySelectorAll('.menopause-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected', 'selected-never'));
+  document.querySelectorAll('.hint').forEach(h => h.style.display = 'none');
+  document.getElementById('recordId').style.display = 'none';
+  document.getElementById('recordId').textContent = '';
+  document.getElementById('submitStatus').textContent = '';
+  document.getElementById('aiContent').innerHTML = `<div class="ai-loading"><div class="ai-spinner"></div><span>AI 正在分析您的暴露風險路徑...</span></div>`;
+  const rs = document.getElementById('resultSection');
+  rs.style.display = 'none';
+  rs.classList.remove('active');
+  document.getElementById('progressLabel').textContent = '基本資料';
+  document.getElementById('progressStep').textContent = '1 / 4';
+  document.getElementById('progressBar').style.width = '25%';
+  document.getElementById('sec0').classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+</script>
+</body>
+</html>
