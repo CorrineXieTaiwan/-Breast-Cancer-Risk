@@ -1097,7 +1097,7 @@ function validateSection(sec) {
       valid = false;
     }
   });
-  if (!valid) showToast('尚未填寫完畢，請完成所有題目 ✏️');
+  if (!valid) showToast('尚未填寫完畢，請完成所有項目 ✏️');
   return valid;
 }
 
@@ -1264,7 +1264,7 @@ async function fetchAIAdvice(payload, level) {
     `Q15 農藥除草劑：${answers.q15?.label||''}`
   ].join('\n');
 
-  const prompt = `你是一位乳癌預防衛教專家。以下是一位使用者的乳癌風險問卷結果，請根據「圖5-4 生活習慣與乳癌危險因子關聯圖」的三條風險路徑（重金屬路徑、塑化劑路徑、高溫烹調路徑），為這位使用者提供個人化的生活改善建議。
+  const prompt = `你是一位乳癌預防衛教專家。以下是一位使用者的乳癌風險結果，請根據「圖5-4 生活習慣與乳癌危險因子關聯圖」的三條風險路徑（重金屬路徑、塑化劑路徑、高溫烹調路徑），為這位使用者提供個人化的生活改善建議。
 
 【基本資料】
 ${age}${menopause ? '、' + menopause : ''}${family ? '、' + family : ''}
